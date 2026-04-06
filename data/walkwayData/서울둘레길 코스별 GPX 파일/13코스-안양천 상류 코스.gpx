@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<gpx version="1.1" creator="GDAL 3.1.4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogr="http://osgeo.org/gdal" xmlns="http://www.topografix.com/GPX/1/1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<metadata><bounds minlat="37.434080000000002" minlon="126.871025000000003" maxlat="37.495953000000000" maxlon="126.902175999999997"/></metadata>                
+<trk>
+  <extensions>
+    <ogr:CONTS_NAME>[13코스] 기찻길 따라 걷는 벚꽃길</ogr:CONTS_NAME>
+    <ogr:ADDR_OLD>경기도 안양시 만안구 석수동 423-6</ogr:ADDR_OLD>
+    <ogr:ADDR_NEW>경기도 안양시 만안구 연현로 113</ogr:ADDR_NEW>
+    <ogr:COORD_DATA>[[126.902176,37.43429],[126.90202,37.43428],[126.90204,37.434204],[126.90201,37.434193],[126.901726,</ogr:COORD_DATA>
+    <ogr:COORD_X>126.902176000</ogr:COORD_X>
+    <ogr:COORD_Y>37.434290000</ogr:COORD_Y>
+    <ogr:CONTS_STAT>1</ogr:CONTS_STAT>
+    <ogr:EX_DATA_02>https://parks.seoul.go.kr/information/etc/dudrim2_0.do</ogr:EX_DATA_02>
+    <ogr:NAME_01>코스명</ogr:NAME_01>
+    <ogr:VALUE_01>[13코스] 안양천 상류 코스</ogr:VALUE_01>
+    <ogr:NAME_02>테마명</ogr:NAME_02>
+    <ogr:VALUE_02>[13코스] 기찻길 따라 걷는 벚꽃길</ogr:VALUE_02>
+    <ogr:NAME_03>지역</ogr:NAME_03>
+    <ogr:VALUE_03>금천구, 구로구</ogr:VALUE_03>
+    <ogr:NAME_04>세부코스</ogr:NAME_04>
+    <ogr:VALUE_04>석수역 ~ 안양천 ~ 철산교 ~ 광릉대교 ~ 사성교 ~ 신구로 유수지 ~ 안양천 캠핑장 ~ 구일역</ogr:VALUE_04>
+    <ogr:NAME_05>난이도</ogr:NAME_05>
+    <ogr:VALUE_05>하</ogr:VALUE_05>
+    <ogr:NAME_06>거리</ogr:NAME_06>
+    <ogr:VALUE_06>8km</ogr:VALUE_06>
+    <ogr:NAME_07>소요시간</ogr:NAME_07>
+    <ogr:VALUE_07>2시간 25분</ogr:VALUE_07>
+    <ogr:NAME_08>출발지</ogr:NAME_08>
+    <ogr:VALUE_08>지하철 1호선 석수역 2번 출입구</ogr:VALUE_08>
+    <ogr:NAME_09>도착지</ogr:NAME_09>
+    <ogr:VALUE_09>지하철 1호선 구일역 1번 출입구</ogr:VALUE_09>
+    <ogr:NAME_10>시점부</ogr:NAME_10>
+    <ogr:VALUE_10>석수역</ogr:VALUE_10>
+    <ogr:NAME_11>종점부</ogr:NAME_11>
+    <ogr:VALUE_11>구일역</ogr:VALUE_11>
+    <ogr:COORD_TYPE>3</ogr:COORD_TYPE>
+    <ogr:BASE_AREA>13902</ogr:BASE_AREA>
+    <ogr:POINT_NUM>다사47113740</ogr:POINT_NUM>
+    <ogr:SUB_ID>13-1</ogr:SUB_ID>
+  </extensions>
+  <trkseg>
+    <trkpt lat="37.43429" lon="126.902176">
+    </trkpt>
+    <trkpt lat="37.43428" lon="126.90202">
+    </trkpt>
+    <trkpt lat="37.434204" lon="126.90204">
+    </trkpt>
+    <trkpt lat="37.434193" lon="126.90201">
+    </trkpt>
+    <trkpt lat="37.434128" lon="126.901726">
+    </trkpt>
+    <trkpt lat="37.434082" lon="126.90147">
+    </trkpt>
+    <trkpt lat="37.43408" lon="126.90125">
+    </trkpt>
+    <trkpt lat="37.434086" lon="126.90112">
+    </trkpt>
+    <trkpt lat="37.434105" lon="126.90097">
+    </trkpt>
+    <trkpt lat="37.43414" lon="126.90084">
+    </trkpt>
+    <trkpt lat="37.434216" lon="126.900764">
+    </trkpt>
+    <trkpt lat="37.43565" lon="126.90115">
+    </trkpt>
+    <trkpt lat="37.437756" lon="126.90123">
+    </trkpt>
+    <trkpt lat="37.439728" lon="126.90077">
+    </trkpt>
+    <trkpt lat="37.45198" lon="126.89532">
+    </trkpt>
+    <trkpt lat="37.45229" lon="126.89535">
+    </trkpt>
+    <trkpt lat="37.452496" lon="126.89512">
+    </trkpt>
+    <trkpt lat="37.454075" lon="126.894394">
+    </trkpt>
+    <trkpt lat="37.456" lon="126.89333">
+    </trkpt>
+    <trkpt lat="37.456036" lon="126.89317">
+    </trkpt>
+    <trkpt lat="37.456055" lon="126.89297">
+    </trkpt>
+    <trkpt lat="37.456215" lon="126.89289">
+    </trkpt>
+    <trkpt lat="37.456104" lon="126.89286">
+    </trkpt>
+    <trkpt lat="37.457962" lon="126.89182">
+    </trkpt>
+    <trkpt lat="37.46183" lon="126.88889">
+    </trkpt>
+    <trkpt lat="37.461845" lon="126.888985">
+    </trkpt>
+    <trkpt lat="37.462074" lon="126.88888">
+    </trkpt>
+    <trkpt lat="37.462734" lon="126.888435">
+    </trkpt>
+    <trkpt lat="37.465412" lon="126.886215">
+    </trkpt>
+    <trkpt lat="37.465694" lon="126.88593">
+    </trkpt>
+    <trkpt lat="37.466446" lon="126.88527">
+    </trkpt>
+    <trkpt lat="37.466656" lon="126.885086">
+    </trkpt>
+    <trkpt lat="37.4674" lon="126.8845">
+    </trkpt>
+    <trkpt lat="37.472927" lon="126.87978">
+    </trkpt>
+    <trkpt lat="37.474075" lon="126.87872">
+    </trkpt>
+    <trkpt lat="37.474457" lon="126.87838">
+    </trkpt>
+    <trkpt lat="37.47499" lon="126.87798">
+    </trkpt>
+    <trkpt lat="37.475548" lon="126.87761">
+    </trkpt>
+    <trkpt lat="37.47586" lon="126.877556">
+    </trkpt>
+    <trkpt lat="37.476276" lon="126.87746">
+    </trkpt>
+    <trkpt lat="37.479122" lon="126.87581">
+    </trkpt>
+    <trkpt lat="37.481564" lon="126.87462">
+    </trkpt>
+    <trkpt lat="37.483982" lon="126.87367">
+    </trkpt>
+    <trkpt lat="37.484375" lon="126.873344">
+    </trkpt>
+    <trkpt lat="37.484955" lon="126.87314">
+    </trkpt>
+    <trkpt lat="37.48517" lon="126.873085">
+    </trkpt>
+    <trkpt lat="37.48527" lon="126.87308">
+    </trkpt>
+    <trkpt lat="37.485348" lon="126.87317">
+    </trkpt>
+    <trkpt lat="37.48811" lon="126.87247">
+    </trkpt>
+    <trkpt lat="37.488686" lon="126.8723">
+    </trkpt>
+    <trkpt lat="37.491074" lon="126.87191">
+    </trkpt>
+    <trkpt lat="37.492214" lon="126.87186">
+    </trkpt>
+    <trkpt lat="37.492645" lon="126.871605">
+    </trkpt>
+    <trkpt lat="37.495697" lon="126.871025">
+    </trkpt>
+    <trkpt lat="37.495953" lon="126.87104">
+    </trkpt>
+  </trkseg>
+</trk>
+</gpx>

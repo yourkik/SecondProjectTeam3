@@ -110,13 +110,22 @@
                     var marker = L.marker(startPoint).addTo(markersGroup).bindPopup(popupHtml);
                     pathBounds.push(startPoint);
 
-                    // 시작점과 끝점을 잇는 대략적인 선 (Start/End 데이터가 존재할 때)
-                    if(trail.end_lat && trail.end_lng) {
+                    // 4. SHP 데이터에서 온 Polyline (실제 궤적)이 존재할 경우
+                    if(trail.polyline && trail.polyline.length > 0) {
+                        L.polyline(trail.polyline, { color: '#007bff', weight: 6, opacity: 0.8 })
+                            .addTo(markersGroup)
+                            .bindPopup(trail.trail_name + " 코스선 (SHP 기반)");
+                        
+                        // 바운더리를 폴리라인 기준으로 넓힘
+                        trail.polyline.forEach(p => pathBounds.push(p));
+                    }
+                    // Polyline이 없을 때 시작점과 끝점만을 잇는 직선 (Fallback)
+                    else if(trail.end_lat && trail.end_lng) {
                         var endPoint = [trail.end_lat, trail.end_lng];
                         var lineData = [startPoint, endPoint];
-                        L.polyline(lineData, { color: '#007bff', weight: 5, opacity: 0.7 })
+                        L.polyline(lineData, { color: '#dc3545', weight: 5, opacity: 0.7, dashArray: '5, 10' })
                             .addTo(markersGroup)
-                            .bindPopup(trail.trail_name + " 코스선");
+                            .bindPopup(trail.trail_name + " (공간 데이터 없음 / 점선 폴백)");
                         pathBounds.push(endPoint);
                     }
                 });
