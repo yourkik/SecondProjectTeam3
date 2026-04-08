@@ -26,6 +26,9 @@ class TrailInfo(BaseModel):
     polyline: Optional[List[List[float]]] = Field(None, description="SHP와 매칭된 실제 선형 좌표 리스트 [[lat, lng], ...]")
     congestion_lvl: Optional[str] = Field(None, description="혼잡도 (여유, 보통, 약간 붐빔, 붐빔)")
     congestion_msg: Optional[str] = Field(None, description="혼잡도 메시지")
+    slope_lvl: Optional[str] = Field(None, description="경사 등급 (평탄, 경사)")
+    slope_val: Optional[str] = Field(None, description="경사 수치 (0-7%, 7-15% 등)")
+    slope_avg: Optional[float] = Field(None, description="평균 경사도 수치 (%)")
 
 # 추천 결과(Response) 통합 모델
 class TrailRecommendationResponse(BaseModel):

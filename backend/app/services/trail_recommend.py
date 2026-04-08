@@ -7,6 +7,7 @@ import shapefile
 from app.models.trail import TrailInfo
 from app.core.config import settings
 from app.services.weather_congestion import fetch_city_data
+from app.services.slope_service import inject_slope_info
 
 # 앱 전역 설정에서 데이터 경로 가져오기
 ABS_DATA_PATH = settings.PET_TRAIL_CSV
@@ -98,8 +99,8 @@ def get_recommended_trails(user_lat: float, user_lng: float, max_distance_km: fl
         print(f"Error loading CSV data: {e}")
         return []
 
-    # 1. MVP용 필터링: 강동구 (SGNG_CD == 740) & 반려견 출입 가능 (Pet_AP == 1)
-    filtered_df = df[(df['SGNG_CD'] == 740) & (df['Pet_AP'] == 1)].copy()
+    # 1. 필터링: 반려견 출입 가능 (Pet_AP == 1) 항목 전체 대상
+    filtered_df = df[df['Pet_AP'] == 1].copy()
 
     recommendations = []
     
@@ -217,6 +218,9 @@ def get_recommended_trails(user_lat: float, user_lng: float, max_distance_km: fl
                         'pm10': weather.get('PM10'),
                         'msg': weather.get('WEATHER_MSG')
                     }
+    
+    # 6. 경사도 정보 주입 (모듈화된 함수 호출 - 성능 이슈 시 이 라인만 제거 가능)
+    inject_slope_info(final_limit_items)
     
     return final_limit_items, weather_info
 

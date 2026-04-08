@@ -15,7 +15,7 @@ class Settings:
     BACKEND_DIR = os.path.dirname(os.path.dirname(CORE_DIR))
     
     # 공통 데이터 디렉토리 (backend 바깥쪽의 data 폴더)
-    DATA_DIR = os.path.abspath(os.path.join(BACKEND_DIR, "../data"))
+    DATA_DIR = os.path.abspath(os.path.join(BACKEND_DIR, "../walkway/data"))
     
     # 개별 데이터셋 절대 경로
     PET_TRAIL_CSV = os.path.join(DATA_DIR, "TB_PTP_TRAIL_M_Pet.csv")

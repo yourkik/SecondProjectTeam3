@@ -217,18 +217,42 @@
                     wWidget.style.display = "none";
                 }
 
-                // 추천 공원 마커 아이콘 설정 (초록색)
-                var parkIcon = L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]
-                });
+        // 추천 항목별 색상 팔레트 정의 (Leaflet color markers와 매칭)
+        var colorPalette = [
+            { name: 'blue', hex: '#2A7FFF', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png' },
+            { name: 'gold', hex: '#FFD700', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png' },
+            { name: 'violet', hex: '#9D00FF', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png' },
+            { name: 'orange', hex: '#FF8C00', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png' },
+            { name: 'green', hex: '#2EB82E', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png' },
+            { name: 'black', hex: '#333333', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-black.png' },
+            { name: 'grey', hex: '#7A7A7A', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png' }
+        ];
 
-                // 3. 응답받은 추천 목록을 지도에 표시
-                var pathBounds = [];
-                data.items.forEach((trail, index) => {
-                    var startPoint = [trail.start_lat, trail.start_lng];
-                    
+        // 3. 응답받은 추천 목록을 지도에 표시
+        var pathBounds = [];
+        data.items.forEach((trail, index) => {
+            var colorSet = colorPalette[index % colorPalette.length];
+            var startPoint = [trail.start_lat, trail.start_lng];
+            
+            // 각 항목별 전용 아이콘 생성
+            var customIcon = L.icon({
+                iconUrl: colorSet.img,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]
+            });
+
+            // 경사도 뱃지 처리 로직
+                    var slopeBadge = "";
+                    var slopeText = "";
+                    if (trail.slope_lvl) {
+                        var sColor = (trail.slope_lvl === "평탄") ? "#28a745" : (trail.slope_lvl === "경사") ? "#fd7e14" : "#6c757d";
+                        var sIcon = (trail.slope_lvl === "평탄") ? "🟢" : (trail.slope_lvl === "경사") ? "🟡" : "⚪";
+                        slopeBadge = `<span style="display:inline-block; margin-left:5px; padding:2px 6px; background:${sColor}; color:white; border-radius:4px; font-size:11px; vertical-align:middle;">${sIcon} ${trail.slope_lvl}</span>`;
+                        
+                        var avgText = (trail.slope_avg !== null && trail.slope_avg !== undefined) ? `약 ${trail.slope_avg}%` : "정보 없음";
+                        slopeText = `<div style="font-size:11px; color:#666; margin-top:2px;">(평균 경사도: ${avgText})</div>`;
+                    }
+
                     // 공통 혼잡도 뱃지 처리 로직
                     var congestionBadge = "";
                     if (trail.congestion_lvl) {
@@ -236,34 +260,34 @@
                                     (trail.congestion_lvl.includes("보통")) ? "darkorange" : "crimson";
                         congestionBadge = `<br><div style="margin-top:8px; text-align:center;"><span style="display:inline-block; padding:4px 10px; background:${color}; color:white; border-radius:12px; font-size:12px; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.2);">🚶 실시간: ${trail.congestion_lvl}</span></div>`;
                     }
-                    
+
                     // a) 타입이 'park'인 경우
                     if (trail.type === 'park') {
                         var popupHtml = `<div style="text-align:center; font-size:13px; line-height:1.5;">
-                            <b style="color: green; font-size:15px;">🌲 [공원] ${trail.trail_name}</b><br>
+                            <b style="color: ${colorSet.hex}; font-size:15px;">🌲 [공원] ${trail.trail_name}</b> ${slopeBadge}<br>
                             나와의 거리: 약 ${trail.distance_from_user} km<br>
-                            (도심 공원 거점)
+                            (도심 공원 거점) ${slopeText}
                             ${congestionBadge}
                         </div>`;
                         
-                        L.marker(startPoint, {icon: parkIcon}).addTo(markersGroup).bindPopup(popupHtml);
+                        L.marker(startPoint, {icon: customIcon}).addTo(markersGroup).bindPopup(popupHtml);
                         pathBounds.push(startPoint);
                     } 
                     // b) 타입이 'trail' (코스 산책로)인 경우
                     else {
                         var popupHtml = `<div style="text-align:center; font-size:13px; line-height:1.5;">
-                            <b style="font-size:15px; color:#0056b3;">[산책로 ${index + 1}] ${trail.trail_name}</b><br>
+                            <b style="font-size:15px; color:${colorSet.hex};">[산책로 ${index + 1}] ${trail.trail_name}</b> ${slopeBadge}<br>
                             나와의 거리: 약 ${trail.distance_from_user} km<br>
-                            소요 시간: 약 ${trail.time_minute}분 (${trail.length_km} km)
+                            소요 시간: 약 ${trail.time_minute}분 (${trail.length_km} km) ${slopeText}
                             ${congestionBadge}
                         </div>`;
 
-                        var marker = L.marker(startPoint).addTo(markersGroup).bindPopup(popupHtml);
+                        var marker = L.marker(startPoint, {icon: customIcon}).addTo(markersGroup).bindPopup(popupHtml);
                         pathBounds.push(startPoint);
 
                         // SHP/GPX 데이터에서 온 Polyline (실제 궤적)이 존재할 경우
                         if(trail.polyline && trail.polyline.length > 0) {
-                            L.polyline(trail.polyline, { color: '#007bff', weight: 6, opacity: 0.8 })
+                            L.polyline(trail.polyline, { color: colorSet.hex, weight: 6, opacity: 0.8 })
                                 .addTo(markersGroup)
                                 .bindPopup(trail.trail_name + " 코스선 (공간좌표 적용)");
                             
