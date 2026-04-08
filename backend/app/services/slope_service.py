@@ -16,7 +16,7 @@ def load_slope_cache():
     if _slope_cache is not None:
         return _slope_cache
     
-    cache_path = os.path.join(settings.DATA_DIR, "slope_cache.json")
+    cache_path = os.path.join(settings.DATA_DIR, "slope_cachev2.json")
     if os.path.exists(cache_path):
         try:
             with open(cache_path, "r", encoding="utf-8") as f:
