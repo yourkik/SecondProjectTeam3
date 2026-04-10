@@ -2,57 +2,103 @@
 <html lang="ko">
 <head>
     <meta charset="utf-8" />
-    <title>산책로 추천 테스트 (임시 UI)</title>
+    <title>반려동물 산책로 추천</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Leaflet 지도 라이브러리 (무료/API Key 불필요) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
-        #header { padding: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 1000; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;}
+        #tabBar { display: flex; gap: 0; }
+        .tab-btn { flex: 1; padding: 13px; font-size: 15px; font-weight: bold; border: none; cursor: pointer; transition: background 0.2s, color 0.2s; }
+        .tab-btn.active-large { background: #007bff; color: white; }
+        .tab-btn.active-small { background: #28a745; color: white; }
+        .tab-btn.inactive { background: #e9ecef; color: #555; }
+        .tab-btn.inactive:hover { background: #dee2e6; }
+        .header-panel { padding: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 1000; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
         #map { flex: 1; width: 100%; }
-        input[type="text"] { padding: 10px; width: 300px; font-size: 15px; border: 1px solid #ccc; border-radius: 6px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
-        button { padding: 10px 20px; font-size: 15px; font-weight: bold; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
-        button:hover { background: #0056b3; }
+        input[type="text"] { padding: 10px; width: 250px; font-size: 15px; border: 1px solid #ccc; border-radius: 6px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+        button.action-btn { padding: 10px 20px; font-size: 15px; font-weight: bold; color: white; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
         .loading { font-size: 14px; color: #666; display: none; font-weight: bold; margin-left: 10px; }
+        .time-slider-wrap { display: flex; align-items: center; gap: 8px; }
+        .time-slider-wrap input[type="range"] { width: 140px; }
+        .time-label { font-weight: bold; font-size: 16px; min-width: 50px; color: #28a745; }
     </style>
 </head>
 <body>
-    <div id="header">
-        <label><b>내 위치 검색:</b></label>
-        <input type="text" id="addressInput" placeholder="예: 강동구 성내동" value="강동구 성내동">
-        <button onclick="searchAndRecommend()">주소로 추천받기</button>
-        <div id="status" class="loading">요청 중...</div>
-    </div>
-    <div id="map"></div>
-    <div style="position: absolute; top: 15px; left: 60px; z-index: 1000;">
-        <button id="toggleHazardsBtn" style="background:#dc3545; font-size:14px; padding:10px 15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.3); border:none; color:white; font-weight:bold; cursor:pointer;" onclick="toggleHazards()">⚠️ 주변 돌발/재난 상황 켜기</button>
+    <!-- ===== 탭 바 ===== -->
+    <div id="tabBar">
+        <button id="tabLarge" class="tab-btn active-large" onclick="switchTab('large')">
+            🌲 산책로·공원 추천 (LargeScale)
+        </button>
+        <button id="tabSmall" class="tab-btn inactive" onclick="switchTab('small')">
+            🐾 주변 루프 경로 (SmallScale)
+        </button>
     </div>
 
-    <div id="disasterWidget" style="display: none; position: absolute; top: 70px; left: 60px; z-index: 1000; background: rgba(220,53,69,0.9); color:white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 14px; max-width: 300px; max-height: 400px; overflow-y:auto; line-height: 1.6;">
-        <div style="font-weight: 900; margin-bottom: 8px; font-size: 16px; border-bottom: 2px solid white; padding-bottom: 4px;">🚨 최신 긴급 재난 알림</div>
-        <div id="disasterContent" style="font-weight:500;">불러오는 중...</div>
+    <!-- ===== LargeScale 헤더 (기존) ===== -->
+    <div id="headerLarge" class="header-panel">
+        <label><b>내 위치 검색:</b></label>
+        <input type="text" id="addressInput" placeholder="예: 강동구 성내동" value="강동구 성내동">
+        <button class="action-btn" style="background:#007bff;" onclick="searchAndRecommend()">주소로 추천받기</button>
+        <div id="status" class="loading">요청 중...</div>
     </div>
-    <div style="position: absolute; top: 80px; right: 10px; z-index: 1000; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 14px;">
-        <div style="font-weight: bold; margin-bottom: 8px;">💡 추천 보기 필터</div>
-        <label style="display:block; margin-bottom:4px;"><input type="radio" name="view_type" value="all" checked> 🟡 모두 보기 (7개)</label>
-        <label style="display:block; margin-bottom:4px;"><input type="radio" name="view_type" value="park"> 🌲 공원만 (5개)</label>
-        <label style="display:block; margin-bottom:12px;"><input type="radio" name="view_type" value="trail"> 🔵 산책로만 (5개)</label>
-        <div style="border-top:1px solid #eee; margin-top:8px; padding-top:8px;"></div>
-        <label style="display:block; color:#444;">
-            <input type="checkbox" id="useApiCheck"> 📡 실시간 날씨/혼잡도 불러오기<br>
-            <span style="font-size:11px; color:#888; margin-left:22px;">(체크 시 서울시 공공 API 사용량 차감)</span>
-        </label>
+
+    <!-- ===== SmallScale 헤더 (신규) ===== -->
+    <div id="headerSmall" class="header-panel" style="display:none;">
+        <label><b>출발지:</b></label>
+        <input type="text" id="addrSmall" placeholder="예: 잠실동, 삼성동" value="잠실동">
+        <div class="time-slider-wrap">
+            <label><b>산책 시간:</b></label>
+            <input type="range" id="timeSlider" min="10" max="60" value="30" step="5"
+                   oninput="document.getElementById('timeLabel').innerText=this.value+'분'">
+            <span id="timeLabel" class="time-label">30분</span>
+        </div>
+        <button class="action-btn" style="background:#28a745;" onclick="generateLoopRoutes()">🐾 루프 경로 생성</button>
+        <div id="statusSmall" class="loading">경로 생성 중...</div>
     </div>
-    
-    <div id="weatherWidget" style="display: none; position: absolute; bottom: 30px; left: 10px; z-index: 1000; background: rgba(255,255,255,0.95); padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-size: 14px; min-width: 160px; line-height: 1.6;">
-        <div style="font-weight: 900; color: #111; margin-bottom: 8px; font-size: 16px; border-bottom: 2px solid #007bff; padding-bottom: 4px;">🌦 주변 실시간 날씨</div>
-        <div id="weatherContent" style="color: #444; font-weight:500;">불러오는 중...</div>
+
+    <!-- ===== 지도 ===== -->
+    <div id="map"></div>
+
+    <!-- ===== LargeScale 오버레이 위젯들 ===== -->
+    <div id="largeScaleWidgets">
+        <div style="position: absolute; top: 15px; left: 60px; z-index: 1000;">
+            <button id="toggleHazardsBtn" style="background:#dc3545; font-size:14px; padding:10px 15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.3); border:none; color:white; font-weight:bold; cursor:pointer;" onclick="toggleHazards()">⚠️ 주변 돌발/재난 상황 켜기</button>
+        </div>
+
+        <div id="disasterWidget" style="display: none; position: absolute; top: 70px; left: 60px; z-index: 1000; background: rgba(220,53,69,0.9); color:white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 14px; max-width: 300px; max-height: 400px; overflow-y:auto; line-height: 1.6;">
+            <div style="font-weight: 900; margin-bottom: 8px; font-size: 16px; border-bottom: 2px solid white; padding-bottom: 4px;">🚨 최신 긴급 재난 알림</div>
+            <div id="disasterContent" style="font-weight:500;">불러오는 중...</div>
+        </div>
+
+        <div style="position: absolute; top: 80px; right: 10px; z-index: 1000; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 14px;">
+            <div style="font-weight: bold; margin-bottom: 8px;">💡 추천 보기 필터</div>
+            <label style="display:block; margin-bottom:4px;"><input type="radio" name="view_type" value="all" checked> 🟡 모두 보기 (7개)</label>
+            <label style="display:block; margin-bottom:4px;"><input type="radio" name="view_type" value="park"> 🌲 공원만 (5개)</label>
+            <label style="display:block; margin-bottom:12px;"><input type="radio" name="view_type" value="trail"> 🔵 산책로만 (5개)</label>
+            <div style="border-top:1px solid #eee; margin-top:8px; padding-top:8px;"></div>
+            <label style="display:block; color:#444;">
+                <input type="checkbox" id="useApiCheck"> 📡 실시간 날씨/혼잡도 불러오기<br>
+                <span style="font-size:11px; color:#888; margin-left:22px;">(체크 시 서울시 공공 API 사용량 차감)</span>
+            </label>
+        </div>
+
+        <div id="weatherWidget" style="display: none; position: absolute; bottom: 30px; left: 10px; z-index: 1000; background: rgba(255,255,255,0.95); padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-size: 14px; min-width: 160px; line-height: 1.6;">
+            <div style="font-weight: 900; color: #111; margin-bottom: 8px; font-size: 16px; border-bottom: 2px solid #007bff; padding-bottom: 4px;">🌦 주변 실시간 날씨</div>
+            <div id="weatherContent" style="color: #444; font-weight:500;">불러오는 중...</div>
+        </div>
+    </div>
+
+    <!-- ===== SmallScale 범례 카드 ===== -->
+    <div id="smallScaleLegend" style="display:none; position:absolute; bottom:30px; left:10px; z-index:1000; background:rgba(255,255,255,0.95); padding:15px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); font-size:14px; min-width:250px; line-height:1.6;">
+        <div style="font-weight:900; color:#28a745; margin-bottom:8px; font-size:16px; border-bottom:2px solid #28a745; padding-bottom:4px;">🐾 주변 루프 경로</div>
+        <div id="legendContent">경로를 생성해주세요.</div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 초기 강동구 중앙 뷰 세팅
-        var map = L.map('map').setView([37.5301, 127.1238], 13); 
+        // ===== 지도 초기화 =====
+        var map = L.map('map').setView([37.5301, 127.1238], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
@@ -60,23 +106,196 @@
 
         var markersGroup = L.layerGroup().addTo(map);
 
-        // 내 위치 마커 아이콘 설정 (빨간색)
         var userIcon = L.icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
             iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]
         });
 
-        // 돌발정보 그룹 및 상태
         var hazardsGroup = L.layerGroup().addTo(map);
         var isHazardsVisible = false;
-        
+
         var hazardIcon = L.icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
             iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]
         });
 
+        // ===== 탭 전환 =====
+        function switchTab(tab) {
+            var tabLarge = document.getElementById('tabLarge');
+            var tabSmall = document.getElementById('tabSmall');
+            var headerLarge = document.getElementById('headerLarge');
+            var headerSmall = document.getElementById('headerSmall');
+            var largeWidgets = document.getElementById('largeScaleWidgets');
+            var smallLegend = document.getElementById('smallScaleLegend');
+
+            markersGroup.clearLayers();
+            hazardsGroup.clearLayers();
+            isHazardsVisible = false;
+            document.getElementById('toggleHazardsBtn').innerText = "⚠️ 주변 돌발/재난 상황 켜기";
+            document.getElementById('toggleHazardsBtn').style.background = "#dc3545";
+            document.getElementById('disasterWidget').style.display = 'none';
+            document.getElementById('weatherWidget').style.display = 'none';
+
+            if (tab === 'large') {
+                tabLarge.className = 'tab-btn active-large';
+                tabSmall.className = 'tab-btn inactive';
+                headerLarge.style.display = 'flex';
+                headerSmall.style.display = 'none';
+                largeWidgets.style.display = 'block';
+                smallLegend.style.display = 'none';
+            } else {
+                tabSmall.className = 'tab-btn active-small';
+                tabLarge.className = 'tab-btn inactive';
+                headerLarge.style.display = 'none';
+                headerSmall.style.display = 'flex';
+                largeWidgets.style.display = 'none';
+                smallLegend.style.display = 'block';
+            }
+        }
+
+        // ===== SmallScale: 경로 레이어 관리 =====
+        var routeLayers = [];   // 각 경로별 LayerGroup
+        var startMarkerLayer = L.layerGroup().addTo(map);
+        var activeRouteIdx = -1; // -1 = 전체 보기
+
+        function showRoute(idx) {
+            // idx === -1 → 전체 보기, 0+ → 해당 경로만
+            activeRouteIdx = idx;
+
+            routeLayers.forEach(function (layer, i) {
+                if (idx === -1 || idx === i) {
+                    if (!map.hasLayer(layer)) map.addLayer(layer);
+                } else {
+                    if (map.hasLayer(layer)) map.removeLayer(layer);
+                }
+            });
+
+            // 범례 버튼 활성 상태 업데이트
+            var btns = document.querySelectorAll('.route-toggle-btn');
+            btns.forEach(function (btn) {
+                var btnIdx = parseInt(btn.getAttribute('data-idx'));
+                if (btnIdx === idx) {
+                    btn.style.outline = '3px solid #333';
+                    btn.style.fontWeight = '900';
+                } else {
+                    btn.style.outline = 'none';
+                    btn.style.fontWeight = 'normal';
+                }
+            });
+        }
+
+        // ===== SmallScale: 루프 경로 생성 =====
+        async function generateLoopRoutes() {
+            var addr = document.getElementById('addrSmall').value;
+            var minutes = parseInt(document.getElementById('timeSlider').value);
+            var status = document.getElementById('statusSmall');
+            var legendEl = document.getElementById('legendContent');
+            if (!addr) { alert('출발지를 입력해주세요.'); return; }
+
+            status.style.display = 'block';
+            status.innerText = '주소 변환 중...';
+            markersGroup.clearLayers();
+            startMarkerLayer.clearLayers();
+            routeLayers.forEach(function (l) { map.removeLayer(l); });
+            routeLayers = [];
+            activeRouteIdx = -1;
+            legendEl.innerHTML = '생성 중...';
+
+            try {
+                // 1. 주소 → 좌표
+                var geoUrl = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(addr);
+                var res = await fetch(geoUrl, { headers: { 'Accept-Language': 'ko' } });
+                var geoData = await res.json();
+                if (!geoData || geoData.length === 0) {
+                    alert('주소를 변환하지 못했습니다. "동" 이름으로 검색해주세요.');
+                    status.style.display = 'none';
+                    return;
+                }
+                var lat = parseFloat(geoData[0].lat);
+                var lng = parseFloat(geoData[0].lon);
+
+                status.innerText = '루프 경로 생성 중... (최초 실행 시 최대 30초)';
+
+                // 2. SmallScale API 호출
+                var apiRes = await fetch('/api/routes/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_lat: lat, user_lng: lng,
+                        target_minutes: minutes, num_routes: 3
+                    })
+                });
+                if (!apiRes.ok) throw new Error('API 서버 오류 (status: ' + apiRes.status + ')');
+                var data = await apiRes.json();
+                status.style.display = 'none';
+
+                if (!data.routes || data.routes.length === 0) {
+                    alert('조건에 맞는 경로를 찾지 못했습니다.\n다른 위치나 시간을 시도해보세요.');
+                    legendEl.innerHTML = '경로 없음';
+                    return;
+                }
+
+                // 3. 출발점 마커 (요청한 실제 위치에 표시)
+                L.marker([data.requested_lat, data.requested_lng], { icon: userIcon })
+                    .addTo(startMarkerLayer)
+                    .bindPopup('<b>🏠 출발/도착점</b><br>' + addr).openPopup();
+
+                // 4. 각 경로를 별도 LayerGroup에 렌더링
+                var routeColors = ['#2196F3', '#4CAF50', '#FF9800', '#E91E63', '#9C27B0'];
+                var bounds = [[data.requested_lat, data.requested_lng]];
+
+                var legendHtml = '<div style="margin-bottom:8px;">'
+                    + '<button class="route-toggle-btn" data-idx="-1" '
+                    + 'onclick="showRoute(-1)" '
+                    + 'style="width:100%; padding:6px; margin-bottom:6px; border:1px solid #ccc; '
+                    + 'border-radius:6px; background:#f8f9fa; cursor:pointer; font-size:13px; '
+                    + 'font-weight:900; outline:3px solid #333;">'
+                    + '🗺️ 전체 보기</button></div>';
+
+                data.routes.forEach(function (route, idx) {
+                    var color = routeColors[idx % routeColors.length];
+                    var coords = route.polyline;
+                    var distKm = (route.total_distance_m / 1000).toFixed(2);
+
+                    // 각 경로를 별도 LayerGroup에 추가
+                    var layerGroup = L.layerGroup().addTo(map);
+                    L.polyline(coords, { color: color, weight: 5, opacity: 0.8 })
+                        .addTo(layerGroup)
+                        .bindPopup('<b>경로 ' + route.route_id + '</b><br>'
+                            + route.estimated_minutes + '분 / '
+                            + route.total_distance_m + 'm');
+                    routeLayers.push(layerGroup);
+
+                    coords.forEach(function (c) { bounds.push(c); });
+
+                    legendHtml += '<button class="route-toggle-btn" data-idx="' + idx + '" '
+                        + 'onclick="showRoute(' + idx + ')" '
+                        + 'style="display:flex; align-items:center; gap:8px; width:100%; '
+                        + 'padding:8px 10px; margin-bottom:4px; border:1px solid #ddd; '
+                        + 'border-radius:6px; background:white; cursor:pointer; font-size:13px; '
+                        + 'transition: background 0.15s;"'
+                        + 'onmouseenter="this.style.background=\'#f0f0f0\'" '
+                        + 'onmouseleave="this.style.background=\'white\'">'
+                        + '<span style="color:' + color + '; font-size:20px; line-height:1;">●</span>'
+                        + '<span>경로 ' + route.route_id + ': '
+                        + route.estimated_minutes + '분 / ' + distKm + 'km</span>'
+                        + '</button>';
+                });
+
+                legendEl.innerHTML = legendHtml;
+                map.fitBounds(bounds, { padding: [50, 50] });
+
+            } catch (err) {
+                console.error(err);
+                alert('에러: ' + err.message);
+                status.style.display = 'none';
+                legendEl.innerHTML = '에러 발생';
+            }
+        }
+
+        // ===== LargeScale: 돌발 정보 =====
         async function toggleHazards() {
             var btn = document.getElementById('toggleHazardsBtn');
             var dWidget = document.getElementById('disasterWidget');
@@ -90,24 +309,24 @@
                 dWidget.style.display = 'none';
                 return;
             }
-            
+
             btn.innerText = "로딩 중...";
             btn.style.background = "#6c757d";
-            
+
             try {
                 var res = await fetch('/api/trails/hazards');
                 var data = await res.json();
-                
+
                 hazardsGroup.clearLayers();
-                
-                if(data.incidents && data.incidents.length > 0) {
+
+                if (data.incidents && data.incidents.length > 0) {
                     data.incidents.forEach(inc => {
                         var popup = `<b>🚧 [${inc.acc_type}] 방해/통제 구간</b><br>${inc.acc_info}`;
-                        L.marker([inc.lat, inc.lng], {icon: hazardIcon}).addTo(hazardsGroup).bindPopup(popup);
+                        L.marker([inc.lat, inc.lng], { icon: hazardIcon }).addTo(hazardsGroup).bindPopup(popup);
                     });
                 }
-                
-                if(data.disasters && data.disasters.length > 0) {
+
+                if (data.disasters && data.disasters.length > 0) {
                     var htmlList = "";
                     data.disasters.forEach(msg => {
                         htmlList += `<div style="margin-bottom:10px; background:rgba(0,0,0,0.2); padding:8px; border-radius:6px;">
@@ -121,12 +340,12 @@
                     dContent.innerHTML = "최근 발령된 재난/안전 문자가 없습니다.";
                     dWidget.style.display = 'block';
                 }
-                
+
                 isHazardsVisible = true;
                 btn.innerText = "⚠️ 재난 상황 끄기";
                 btn.style.background = "#28a745";
-                
-            } catch(err) {
+
+            } catch (err) {
                 console.error(err);
                 alert("정보를 불러오지 못했습니다.");
                 btn.innerText = "⚠️ 주변 돌발/재난 상황 켜기";
@@ -134,22 +353,22 @@
             }
         }
 
+        // ===== LargeScale: 산책로·공원 추천 =====
         async function searchAndRecommend() {
             var addr = document.getElementById('addressInput').value;
             var status = document.getElementById('status');
-            if(!addr) { alert('주소를 먼저 입력해주세요.'); return; }
-            
+            if (!addr) { alert('주소를 먼저 입력해주세요.'); return; }
+
             status.style.display = 'block';
             status.innerText = '주소 변환 중...';
             markersGroup.clearLayers();
 
             try {
-                // 1. 주소 -> 좌표 (오픈스트리트맵 Geocoding, 테스트용 무료 API)
                 var geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}`;
-                var res = await fetch(geoUrl, { headers: { 'Accept-Language': 'ko' }});
+                var res = await fetch(geoUrl, { headers: { 'Accept-Language': 'ko' } });
                 var geoData = await res.json();
 
-                if(!geoData || geoData.length === 0) {
+                if (!geoData || geoData.length === 0) {
                     alert('주소를 좌표로 변환하지 못했습니다. "동" 이름 (예: 명일동, 천호동)이나 유명한 장소로 검색해주세요.');
                     status.style.display = 'none';
                     return;
@@ -159,26 +378,24 @@
                 var lng = parseFloat(geoData[0].lon);
 
                 map.setView([lat, lng], 14);
-                
-                L.marker([lat, lng], {icon: userIcon}).addTo(markersGroup)
+
+                L.marker([lat, lng], { icon: userIcon }).addTo(markersGroup)
                     .bindPopup("<b>현재 내 위치 기준점</b><br>" + addr).openPopup();
 
-                // 선택된 보기 필터(view_type) 가져오기 및 limit 동적 결정
                 var viewTypeOpts = document.getElementsByName('view_type');
                 var selectedViewType = "all";
                 for (var i = 0; i < viewTypeOpts.length; i++) {
                     if (viewTypeOpts[i].checked) { selectedViewType = viewTypeOpts[i].value; break; }
                 }
                 var targetLimit = (selectedViewType === "all") ? 7 : 5;
-                
+
                 var isApiUsed = document.getElementById('useApiCheck').checked;
 
                 status.innerText = '산책로/공원 추천 데이터 요청 중...';
 
-                // 2. 작성한 FastAPI 백엔드로 추천 요청 (limit과 view_type 동적 할당)
                 var apiRes = await fetch('/api/trails/recommend', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         user_lat: lat,
                         user_lng: lng,
@@ -188,25 +405,25 @@
                         use_realtime_api: isApiUsed
                     })
                 });
-                
-                if(!apiRes.ok) throw new Error("API 서버 응답 오류. 콘솔을 확인하세요.");
-                
+
+                if (!apiRes.ok) throw new Error("API 서버 응답 오류. 콘솔을 확인하세요.");
+
                 var data = await apiRes.json();
                 status.style.display = 'none';
 
-                if(!data.items || data.items.length === 0) {
+                if (!data.items || data.items.length === 0) {
                     alert("주변 10km 이내에 추천할 산책로가 없습니다.");
                     return;
                 }
 
-                // 2-1. 날씨 데이터 렌더링
+                // 날씨 데이터 렌더링
                 var wWidget = document.getElementById('weatherWidget');
                 var wContent = document.getElementById('weatherContent');
                 if (data.weather_temp) {
                     var pm10Val = parseInt(data.weather_pm10) || 0;
                     var pmColor = (pm10Val <= 30) ? "royalblue" : (pm10Val <= 80) ? "mediumseagreen" : (pm10Val <= 150) ? "darkorange" : "crimson";
                     var pmText = (pm10Val <= 30) ? "좋음" : (pm10Val <= 80) ? "보통" : (pm10Val <= 150) ? "나쁨" : "매우 나쁨";
-                    
+
                     wWidget.style.display = "block";
                     wContent.innerHTML = `
                         <b>기온:</b> <span style="color:#e63946; font-size:16px;">${data.weather_temp}℃</span><br>
@@ -217,51 +434,47 @@
                     wWidget.style.display = "none";
                 }
 
-        // 추천 항목별 색상 팔레트 정의 (Leaflet color markers와 매칭)
-        var colorPalette = [
-            { name: 'blue', hex: '#2A7FFF', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png' },
-            { name: 'gold', hex: '#FFD700', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png' },
-            { name: 'violet', hex: '#9D00FF', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png' },
-            { name: 'orange', hex: '#FF8C00', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png' },
-            { name: 'green', hex: '#2EB82E', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png' },
-            { name: 'black', hex: '#333333', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-black.png' },
-            { name: 'grey', hex: '#7A7A7A', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png' }
-        ];
+                var colorPalette = [
+                    { name: 'blue', hex: '#2A7FFF', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png' },
+                    { name: 'gold', hex: '#FFD700', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png' },
+                    { name: 'violet', hex: '#9D00FF', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png' },
+                    { name: 'orange', hex: '#FF8C00', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png' },
+                    { name: 'green', hex: '#2EB82E', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png' },
+                    { name: 'black', hex: '#333333', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-black.png' },
+                    { name: 'grey', hex: '#7A7A7A', img: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png' }
+                ];
 
-        // 3. 응답받은 추천 목록을 지도에 표시
-        var pathBounds = [];
-        data.items.forEach((trail, index) => {
-            var colorSet = colorPalette[index % colorPalette.length];
-            var startPoint = [trail.start_lat, trail.start_lng];
-            
-            // 각 항목별 전용 아이콘 생성
-            var customIcon = L.icon({
-                iconUrl: colorSet.img,
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]
-            });
+                var pathBounds = [];
+                data.items.forEach((trail, index) => {
+                    var colorSet = colorPalette[index % colorPalette.length];
+                    var startPoint = [trail.start_lat, trail.start_lng];
 
-            // 경사도 뱃지 처리 로직
+                    var customIcon = L.icon({
+                        iconUrl: colorSet.img,
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]
+                    });
+
+                    // 경사도 뱃지
                     var slopeBadge = "";
                     var slopeText = "";
                     if (trail.slope_lvl) {
                         var sColor = (trail.slope_lvl === "평탄") ? "#28a745" : (trail.slope_lvl === "경사") ? "#fd7e14" : "#6c757d";
                         var sIcon = (trail.slope_lvl === "평탄") ? "🟢" : (trail.slope_lvl === "경사") ? "🟡" : "⚪";
                         slopeBadge = `<span style="display:inline-block; margin-left:5px; padding:2px 6px; background:${sColor}; color:white; border-radius:4px; font-size:11px; vertical-align:middle;">${sIcon} ${trail.slope_lvl}</span>`;
-                        
+
                         var avgText = (trail.slope_avg !== null && trail.slope_avg !== undefined) ? `약 ${trail.slope_avg}%` : "정보 없음";
                         slopeText = `<div style="font-size:11px; color:#666; margin-top:2px;">(평균 경사도: ${avgText})</div>`;
                     }
 
-                    // 공통 혼잡도 뱃지 처리 로직
+                    // 혼잡도 뱃지
                     var congestionBadge = "";
                     if (trail.congestion_lvl) {
-                        var color = (trail.congestion_lvl === "여유") ? "forestgreen" : 
-                                    (trail.congestion_lvl.includes("보통")) ? "darkorange" : "crimson";
+                        var color = (trail.congestion_lvl === "여유") ? "forestgreen" :
+                            (trail.congestion_lvl.includes("보통")) ? "darkorange" : "crimson";
                         congestionBadge = `<br><div style="margin-top:8px; text-align:center;"><span style="display:inline-block; padding:4px 10px; background:${color}; color:white; border-radius:12px; font-size:12px; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.2);">🚶 실시간: ${trail.congestion_lvl}</span></div>`;
                     }
 
-                    // a) 타입이 'park'인 경우
                     if (trail.type === 'park') {
                         var popupHtml = `<div style="text-align:center; font-size:13px; line-height:1.5;">
                             <b style="color: ${colorSet.hex}; font-size:15px;">🌲 [공원] ${trail.trail_name}</b> ${slopeBadge}<br>
@@ -269,12 +482,10 @@
                             (도심 공원 거점) ${slopeText}
                             ${congestionBadge}
                         </div>`;
-                        
-                        L.marker(startPoint, {icon: customIcon}).addTo(markersGroup).bindPopup(popupHtml);
+
+                        L.marker(startPoint, { icon: customIcon }).addTo(markersGroup).bindPopup(popupHtml);
                         pathBounds.push(startPoint);
-                    } 
-                    // b) 타입이 'trail' (코스 산책로)인 경우
-                    else {
+                    } else {
                         var popupHtml = `<div style="text-align:center; font-size:13px; line-height:1.5;">
                             <b style="font-size:15px; color:${colorSet.hex};">[산책로 ${index + 1}] ${trail.trail_name}</b> ${slopeBadge}<br>
                             나와의 거리: 약 ${trail.distance_from_user} km<br>
@@ -282,23 +493,17 @@
                             ${congestionBadge}
                         </div>`;
 
-                        var marker = L.marker(startPoint, {icon: customIcon}).addTo(markersGroup).bindPopup(popupHtml);
+                        L.marker(startPoint, { icon: customIcon }).addTo(markersGroup).bindPopup(popupHtml);
                         pathBounds.push(startPoint);
 
-                        // SHP/GPX 데이터에서 온 Polyline (실제 궤적)이 존재할 경우
-                        if(trail.polyline && trail.polyline.length > 0) {
+                        if (trail.polyline && trail.polyline.length > 0) {
                             L.polyline(trail.polyline, { color: colorSet.hex, weight: 6, opacity: 0.8 })
                                 .addTo(markersGroup)
                                 .bindPopup(trail.trail_name + " 코스선 (공간좌표 적용)");
-                            
-                            // 바운더리를 폴리라인 기준으로 넓힘
                             trail.polyline.forEach(p => pathBounds.push(p));
-                        }
-                        // Polyline이 없을 때 시작점과 끝점만을 잇는 직선 (Fallback)
-                        else if(trail.end_lat && trail.end_lng) {
+                        } else if (trail.end_lat && trail.end_lng) {
                             var endPoint = [trail.end_lat, trail.end_lng];
-                            var lineData = [startPoint, endPoint];
-                            L.polyline(lineData, { color: '#dc3545', weight: 5, opacity: 0.7, dashArray: '5, 10' })
+                            L.polyline([startPoint, endPoint], { color: '#dc3545', weight: 5, opacity: 0.7, dashArray: '5, 10' })
                                 .addTo(markersGroup)
                                 .bindPopup(trail.trail_name + " (공간 데이터 없음 / 점선 폴백)");
                             pathBounds.push(endPoint);
@@ -306,7 +511,6 @@
                     }
                 });
 
-                // 내 위치와 추천 산책로들이 한눈에 보이게 줌 조정
                 pathBounds.push([lat, lng]);
                 map.fitBounds(pathBounds, { padding: [50, 50] });
 

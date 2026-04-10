@@ -15,7 +15,7 @@ class Settings:
     BACKEND_DIR = os.path.dirname(os.path.dirname(CORE_DIR))
     
     # 공통 데이터 디렉토리 (backend 바깥쪽의 data 폴더)
-    DATA_DIR = os.path.abspath(os.path.join(BACKEND_DIR, "../walkway/data"))
+    DATA_DIR = os.path.abspath(os.path.join(BACKEND_DIR, "../data/walkwayData"))
     
     # 개별 데이터셋 절대 경로
     PET_TRAIL_CSV = os.path.join(DATA_DIR, "TB_PTP_TRAIL_M_Pet.csv")
@@ -29,6 +29,10 @@ class Settings:
     # 공공데이터포털 행정안전부 재난문자 API KEY
     DISASTER_API_KEY = os.getenv("DISASTER_API_KEY")
     
-    # (추후 이곳에 날씨 DB 경로, 혼잡도 API Key 등을 추가하시면 됩니다)
+    # SmallScale(주변 루프 경로) 데이터 경로
+    OSM_EDGES_PATH = os.path.join(DATA_DIR, "osm", "edges_clean.geojson")
+    OSM_LEISURE_PATH = os.path.join(DATA_DIR, "osm", "leisure_clean.geojson")
+    OSM_STAIRS_PATH = os.path.join(DATA_DIR, "osm", "stairs.geojson")
+    WEIGHTS_YAML_PATH = os.path.join(BACKEND_DIR, "config", "weights.yaml")
 
 settings = Settings()
