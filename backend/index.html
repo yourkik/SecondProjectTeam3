@@ -73,7 +73,7 @@
 
         <div style="position: absolute; top: 80px; right: 10px; z-index: 1000; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 14px;">
             <div style="font-weight: bold; margin-bottom: 8px;">💡 추천 보기 필터</div>
-            <label style="display:block; margin-bottom:4px;"><input type="radio" name="view_type" value="all" checked> 🟡 모두 보기 (7개)</label>
+            <label style="display:block; margin-bottom:4px;"><input type="radio" name="view_type" value="trail+park" checked> 🟡 산책로+공원 통합 (7개)</label>
             <label style="display:block; margin-bottom:4px;"><input type="radio" name="view_type" value="park"> 🌲 공원만 (5개)</label>
             <label style="display:block; margin-bottom:4px;"><input type="radio" name="view_type" value="trail"> 🔵 산책로만 (5개)</label>
             <label style="display:block; margin-bottom:12px;"><input type="radio" name="view_type" value="facility"> 🏥 애견시설만(놀이터/병원/카페)</label>
@@ -384,7 +384,7 @@
                     .bindPopup("<b>현재 내 위치 기준점</b><br>" + addr).openPopup();
 
                 var viewTypeOpts = document.getElementsByName('view_type');
-                var selectedViewType = "all";
+                var selectedViewType = "trail+park";
                 for (var i = 0; i < viewTypeOpts.length; i++) {
                     if (viewTypeOpts[i].checked) { selectedViewType = viewTypeOpts[i].value; break; }
                 }

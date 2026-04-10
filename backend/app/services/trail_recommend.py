@@ -105,7 +105,7 @@ def get_recommended_trails(user_lat: float, user_lng: float, max_distance_km: fl
     recommendations = []
     
     # 3-1. 산책로 탐색 (CSV 데이터 기반)
-    if view_type in ["all", "trail"]:
+    if view_type in ["trail+park", "trail"]:
         for _, row in filtered_df.iterrows():
             start_lat = float(row.get('PNTM_YCRD', 0))
             start_lng = float(row.get('PNTM_XCRD', 0))
@@ -145,7 +145,7 @@ def get_recommended_trails(user_lat: float, user_lng: float, max_distance_km: fl
                 recommendations.append(trail)
 
     # 3-2. 공원 탐색 및 리스트업
-    if view_type in ["all", "park"]:
+    if view_type in ["trail+park", "park"]:
         try:
             park_df = pd.read_csv(settings.PARK_CSV_PATH, encoding="euc-kr")
             filtered_park_df = park_df.copy()
@@ -179,7 +179,7 @@ def get_recommended_trails(user_lat: float, user_lng: float, max_distance_km: fl
             print(f"Error: 공원 데이터를 불러올 수 없습니다. ({e})")
 
     # 3-3. 반려견 시설 (놀이터, 병원, 카페) 탐색 및 리스트업
-    if view_type in ["all", "playground", "facility"]:
+    if view_type == "facility":
         try:
             pg_df = pd.read_csv(settings.PLAYGROUND_CSV_PATH, encoding="utf-8")
             for idx, row in pg_df.iterrows():

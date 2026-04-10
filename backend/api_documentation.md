@@ -72,7 +72,7 @@
 ```
 - `max_distance_km`: 탐색할 최대 반경(km) (예: 10.0~20.0)
 - `limit`: 반환할 최소 결과 개수
-- `view_type`: `"all"`, `"trail"`(산책로만), `"park"`(공원만), `"playground"`(놀이터만), `"facility"`(애견시설-병원/놀이터/카페) 중 택 1.
+- `view_type`: `"trail+park"`(산책로+공원), `"trail"`(산책로만), `"park"`(공원만), `"facility"`(애견시설-병원/놀이터/카페) 중 택 1.
 - `use_realtime_api`: 결과 리스트 안에 있는 명칭들 기준으로 혼잡도를 실시간으로 불러와 `TrailInfo` 객체에 붙일 지 여부 (`true` 시 외부 요청 대기 시간 증가).
 
 ### Response (응답 예시)

@@ -7,7 +7,7 @@ class TrailRecommendationRequest(BaseModel):
     user_lng: float = Field(..., description="사용자 현재 경도 (X)", example=127.150)
     max_distance_km: float = Field(20.0, description="최대 탐색 반경(km)")
     limit: int = Field(5, gt=0, le=50, description="반환할 추천 산책로의 최대 개수")
-    view_type: str = Field("all", description="보여줄 타입 ('all', 'park', 'trail', 'playground', 'facility')")
+    view_type: str = Field("trail+park", description="보여줄 타입 ('trail+park', 'park', 'trail', 'facility')")
     use_realtime_api: bool = Field(False, description="실시간 도시 데이터 API 호출 여부")
 
 # 산책로 정보(Response) 세부 모델
