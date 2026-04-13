@@ -9,7 +9,7 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: 'pet-walk'   # Azure에 생성할 Web App 이름으로 변경 필요
-  ACR_LOGIN_SERVER: 'petwalkregistry.azurecr.io' # 생성할 ACR 이름으로 변경 필요
+  ACR_LOGIN_SERVER: 'petwalkbackend.azurecr.io' # 생성할 ACR 이름으로 변경 필요
   IMAGE_NAME: 'pet-walk-app'
 
 jobs:
