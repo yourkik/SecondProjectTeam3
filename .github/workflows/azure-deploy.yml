@@ -1,4 +1,4 @@
-name: Build and deploy Python app to Azure Web App - pet-walk-service
+name: Build and deploy Python app to Azure Web App - pet-walk
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: 'pet-walk-service'   # Azure에 생성할 Web App 이름으로 변경 필요
+  AZURE_WEBAPP_NAME: 'pet-walk'   # Azure에 생성할 Web App 이름으로 변경 필요
   ACR_LOGIN_SERVER: 'petwalkregistry.azurecr.io' # 생성할 ACR 이름으로 변경 필요
   IMAGE_NAME: 'pet-walk-app'
 
