@@ -39,6 +39,8 @@
     <div id="headerLarge" class="header-panel">
         <label><b>내 위치 검색:</b></label>
         <input type="text" id="addressInput" placeholder="예: 강동구 성내동" value="강동구 성내동">
+        
+
         <button class="action-btn" style="background:#007bff;" onclick="searchAndRecommend()">주소로 추천받기</button>
         <div id="status" class="loading">요청 중...</div>
     </div>
@@ -503,6 +505,15 @@
                         congestionBadge = `<br><div style="margin-top:8px; text-align:center;"><span style="display:inline-block; padding:4px 10px; background:${color}; color:white; border-radius:12px; font-size:12px; font-weight:bold; box-shadow:0 2px 4px rgba(0,0,0,0.2);">🚶 실시간: ${trail.congestion_lvl}</span></div>`;
                     }
 
+                    // 안전 가이드 (신규)
+                    var safetyTipsHtml = "";
+                    if (trail.safety_tips && trail.safety_tips.length > 0) {
+                        safetyTipsHtml = `<div style="margin-top:10px; padding:10px; background:#fff3cd; border-left:4px solid #ffc107; border-radius:4px; text-align:left; font-size:12px;">
+                            <b style="color:#856404;">📝 맞춤형 안전 정보</b><br>
+                            ${trail.safety_tips.map(tip => '• ' + tip).join('<br>')}
+                        </div>`;
+                    }
+
                     if (trail.type === 'park') {
                         var popupHtml = `<div style="text-align:center; font-size:13px; line-height:1.5;">
                             <b style="color: ${colorSet.hex}; font-size:15px;">🌲 [공원] ${trail.trail_name}</b> ${slopeBadge}<br>
@@ -510,6 +521,7 @@
                             (도심 공원 거점) ${slopeText}
                             ${soilBadge}
                             ${congestionBadge}
+                            ${safetyTipsHtml}
                         </div>`;
 
                         L.marker(startPoint, { icon: customIcon }).addTo(markersGroup).bindPopup(popupHtml);
@@ -548,6 +560,7 @@
                             소요 시간: 약 ${trail.time_minute}분 (${trail.length_km} km) ${slopeText}
                             ${soilBadge}
                             ${congestionBadge}
+                            ${safetyTipsHtml}
                         </div>`;
 
                         L.marker(startPoint, { icon: customIcon }).addTo(markersGroup).bindPopup(popupHtml);

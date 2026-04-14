@@ -37,13 +37,22 @@ def _load_slope_cache_from_db() -> dict:
     cache = {}
     for row in rows:
         name = str(row["trail_name"]).strip()
-        avg  = row["avg_slope"]
-        lvl  = row["slope_type"] or _categorize_slope(avg)
+        raw_avg = row["avg_slope"]
+        
+        # 사용자의 요청에 따라 0.0%는 데이터가 없는 것으로 간주함
+        if raw_avg == 0.0:
+            lvl = "정보 없음"
+            val = "-"
+            avg = None
+        else:
+            lvl = _categorize_slope(raw_avg)
+            val = f"{raw_avg:.1f}%"
+            avg = round(float(raw_avg), 2)
 
         cache[name] = {
             "lvl": lvl,
-            "val": f"{avg:.1f}%",
-            "avg": round(float(avg), 2),
+            "val": val,
+            "avg": avg,
         }
 
     print(f"[slope_service] DB에서 경사도 {len(cache)}건 로드 완료")
@@ -52,7 +61,7 @@ def _load_slope_cache_from_db() -> dict:
 
 def _categorize_slope(avg_pct: float) -> str:
     """평균 경사 수치(%)로 등급 분류 (DB slope_type이 없을 때 폴백)"""
-    if avg_pct is None:
+    if avg_pct is None or avg_pct == 0.0:
         return "정보 없음"
     if avg_pct < 3.0:
         return "평지"

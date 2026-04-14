@@ -45,6 +45,9 @@ class TrailInfo(BaseModel):
     
     # 바닥 재질 센서 (VWorld)
     soil_type: Optional[str] = Field(None, description="Vworld 바닥 재질(사양질 등)")
+    
+    # 맞춤형 안전 가이드 (신규)
+    safety_tips: List[str] = Field(default_factory=list, description="견종 및 환경별 맞춤형 주의사항")
 
 # 추천 결과(Response) 통합 모델
 class TrailRecommendationResponse(BaseModel):

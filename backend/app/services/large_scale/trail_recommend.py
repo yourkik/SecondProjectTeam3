@@ -10,6 +10,7 @@ from app.core.db import fetch_all
 from app.services.large_scale.weather_congestion import fetch_city_data
 from app.services.large_scale.slope_service import inject_slope_info
 from app.services.large_scale.soil_service import inject_soil_info
+from app.services.large_scale.safety_service import inject_safety_tips
 
 # 산책로 CSV는 DB에 없으므로 파일 유지
 ABS_DATA_PATH = settings.PET_TRAIL_CSV
@@ -286,30 +287,75 @@ def get_recommended_trails(user_lat: float, user_lng: float, max_distance_km: fl
                     item.congestion_lvl = ppltn_list[0].get('AREA_CONGEST_LVL')
                     item.congestion_msg = ppltn_list[0].get('AREA_CONGEST_MSG')
                 if not weather_info:
+                    # 1) 날씨 정보 (기온, 메시지)
                     weather_list = city_data.get('WEATHER_STTS', [])
-                    if weather_list:
-                        weather = weather_list[0]
+                    weather = weather_list[0] if weather_list else {}
+                    
+                    # 2) 미세먼지 정보 (수치, 메시지)
+                    air_list = city_data.get('AIR_QUALITY_STTS', [])
+                    air = air_list[0] if air_list else {}
+
+                    temp = weather.get('TEMP')
+                    pm10 = air.get('PM10')
+                    w_msg = weather.get('WEATHER_MSG', '')
+                    a_msg = air.get('AIR_MSG', '')
+                    
+                    # 메시지 통합
+                    full_msg = f"{w_msg} {a_msg}".strip()
+                    
+                    # 기온이 높을 경우 경고 문구 추가
+                    if temp:
+                        try:
+                            if float(temp) >= 25:
+                                full_msg = f"🔥 [고온 주의] 기온이 {temp}℃로 높습니다. 수분 섭취에 유의하세요! {full_msg}"
+                        except ValueError:
+                            pass
+
+                    if not weather_info:
                         weather_info = {
-                            'temp': weather.get('TEMP'),
-                            'pm10': weather.get('PM10'),
-                            'msg': weather.get('WEATHER_MSG')
+                            'temp': temp,
+                            'pm10': pm10,
+                            'msg': full_msg
                         }
         if not weather_info:
             default_data = fetch_city_data("강동구청")
             if default_data:
+                # 1) 날씨 정보
                 weather_list = default_data.get('WEATHER_STTS', [])
-                if weather_list:
-                    weather = weather_list[0]
-                    weather_info = {
-                        'temp': weather.get('TEMP'),
-                        'pm10': weather.get('PM10'),
-                        'msg': weather.get('WEATHER_MSG')
-                    }
+                weather = weather_list[0] if weather_list else {}
+                
+                # 2) 미세먼지 정보
+                air_list = default_data.get('AIR_QUALITY_STTS', [])
+                air = air_list[0] if air_list else {}
+
+                temp = weather.get('TEMP')
+                pm10 = air.get('PM10')
+                w_msg = weather.get('WEATHER_MSG', '')
+                a_msg = air.get('AIR_MSG', '')
+                
+                full_msg = f"{w_msg} {a_msg}".strip()
+                
+                if temp:
+                    try:
+                        if float(temp) >= 25:
+                            full_msg = f"🔥 [고온 주의] 기온이 {temp}℃로 높습니다. 수분 섭취에 유의하세요! {full_msg}"
+                    except ValueError:
+                        pass
+
+                weather_info = {
+                    'temp': temp,
+                    'pm10': pm10,
+                    'msg': full_msg
+                }
 
     # 6. 경사도 정보 주입
     inject_slope_info(final_limit_items)
 
     # 7. 바닥 재질 정보 주입
     inject_soil_info(final_limit_items)
+
+    # 8. 개인화 안전 가이드 주입 (신규)
+    weather_temp = weather_info.get('temp') if weather_info else None
+    inject_safety_tips(final_limit_items, weather_temp)
 
     return final_limit_items, weather_info
