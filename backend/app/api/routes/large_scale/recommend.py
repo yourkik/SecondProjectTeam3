@@ -1,4 +1,9 @@
-from fastapi import APIRouter
+import json
+import math
+import os
+import re
+
+from fastapi import APIRouter, Query
 from app.models.large_scale.trail import TrailRecommendationRequest, TrailRecommendationResponse, HazardResponse
 from app.models.large_scale.weather import WeatherRequest, WeatherResponse
 from app.services.large_scale.trail_recommend import get_recommended_trails
@@ -25,6 +30,10 @@ def recommend_trails(request: TrailRecommendationRequest):
         items=trails,
         weather_temp=weather_info.get("temp") if weather_info else None,
         weather_pm10=weather_info.get("pm10") if weather_info else None,
+        weather_pm25=weather_info.get("pm25") if weather_info else None,
+        weather_pm25_index=weather_info.get("pm25_index") if weather_info else None,
+        weather_uv_index=weather_info.get("uv_index") if weather_info else None,
+        weather_precipitation=weather_info.get("precipitation") if weather_info else None,
         weather_msg=weather_info.get("msg") if weather_info else None,
         count=len(trails)
     )
@@ -73,16 +82,42 @@ def get_weather(request: WeatherRequest):
             
     return WeatherResponse(**weather_info)
 
+def _haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    radius_km = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng / 2) ** 2
+    )
+    return radius_km * (2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)))
+
+
+def _extract_region_tokens(location_hint: str | None):
+    if not location_hint:
+        return []
+    matches = re.findall(r"[가-힣]+(?:특별시|광역시|자치시|자치도|도|시|군|구|동)", location_hint)
+    tokens = []
+    for token in matches:
+        token = token.strip()
+        if token and token not in tokens:
+            tokens.append(token)
+    return tokens
+
+
 @router.get("/hazards", response_model=HazardResponse)
-def get_hazards():
+def get_hazards(
+    lat: float | None = Query(default=None),
+    lng: float | None = Query(default=None),
+    radius_km: float = Query(default=5.0, gt=0, le=30),
+    location_hint: str | None = Query(default=None),
+):
     """
     지도에 렌더링할 100건의 캐싱된 돌발정보(TOPIS)와
     실시간 재난문자(행정안전부)를 하이브리드로 병합하여 반환합니다.
     """
     from app.services.large_scale.weather_congestion import fetch_disaster_messages
     from app.core.config import settings
-    import os
-    import json
     
     incidents = []
     try:
@@ -92,9 +127,27 @@ def get_hazards():
                 incidents = json.load(f)
     except Exception as e:
         print(f"Error reading incidents cache: {e}")
-        
+
+    if lat is not None and lng is not None:
+        filtered_incidents = []
+        for incident in incidents:
+            try:
+                incident_lat = float(incident.get("lat"))
+                incident_lng = float(incident.get("lng"))
+            except (TypeError, ValueError):
+                continue
+            if _haversine_km(lat, lng, incident_lat, incident_lng) <= radius_km:
+                filtered_incidents.append(incident)
+        incidents = filtered_incidents
+
     disasters = fetch_disaster_messages()
-    
+    region_tokens = _extract_region_tokens(location_hint)
+    if region_tokens:
+        disasters = [
+            msg for msg in disasters
+            if any(token in str(msg.get("rcptn_rgn_nm", "")) for token in region_tokens)
+        ]
+
     return HazardResponse(
         incidents=incidents,
         disasters=disasters

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="utf-8" />
@@ -505,7 +505,10 @@
             btn.style.background = "#6c757d";
 
             try {
-                var res = await fetch('/api/trails/hazards');
+                var center = map.getCenter();
+                var locationHint = document.getElementById('addressInput').value || '';
+                var hazardUrl = `/api/trails/hazards?lat=${encodeURIComponent(center.lat)}&lng=${encodeURIComponent(center.lng)}&radius_km=5&location_hint=${encodeURIComponent(locationHint)}`;
+                var res = await fetch(hazardUrl);
                 var data = await res.json();
 
                 hazardsGroup.clearLayers();
@@ -528,7 +531,16 @@
                     dContent.innerHTML = htmlList;
                     dWidget.style.display = 'block';
                 } else {
-                    dContent.innerHTML = "최근 발령된 재난/안전 문자가 없습니다.";
+                    var regionLabel = locationHint ? '<b>' + locationHint + '</b> 주변' : '현재 지역';
+                    dContent.innerHTML = '<div style="text-align:center; padding:6px 0;">'
+                        + '<div style="font-size:22px; margin-bottom:6px;">✅</div>'
+                        + '<div style="font-weight:bold; font-size:14px;">' + regionLabel + ' 재난 알림 없음</div>'
+                        + '<div style="font-size:12px; margin-top:6px; color:#f8d7da; line-height:1.6;">'
+                        + '오늘 발령된 긴급 재난문자 중<br>'
+                        + '해당 지역에 해당하는 내용이 없습니다.<br>'
+                        + '<span style="font-size:11px; opacity:0.8;">(행정안전부 실시간 데이터 정상 수신 중)</span>'
+                        + '</div>'
+                        + '</div>';
                     dWidget.style.display = 'block';
                 }
 
@@ -613,16 +625,56 @@
                 // 날씨 데이터 렌더링
                 var wWidget = document.getElementById('weatherWidget');
                 var wContent = document.getElementById('weatherContent');
-                if (data.weather_temp) {
-                    var pm10Val = parseInt(data.weather_pm10) || 0;
-                    var pmColor = (pm10Val <= 30) ? "royalblue" : (pm10Val <= 80) ? "mediumseagreen" : (pm10Val <= 150) ? "darkorange" : "crimson";
-                    var pmText = (pm10Val <= 30) ? "좋음" : (pm10Val <= 80) ? "보통" : (pm10Val <= 150) ? "나쁨" : "매우 나쁨";
+                if (data.weather_temp || data.weather_pm10 || data.weather_pm25 || data.weather_uv_index || data.weather_precipitation || data.weather_msg) {
+                    var hasPm10 = data.weather_pm10 !== null && data.weather_pm10 !== undefined && String(data.weather_pm10).trim() !== '';
+                    var pm10Val = hasPm10 ? parseInt(data.weather_pm10, 10) : null;
+                    var pmColor = hasPm10
+                        ? ((pm10Val <= 30) ? "royalblue" : (pm10Val <= 80) ? "mediumseagreen" : (pm10Val <= 150) ? "darkorange" : "crimson")
+                        : "#6c757d";
+                    var pmText = hasPm10
+                        ? ((pm10Val <= 30) ? "좋음" : (pm10Val <= 80) ? "보통" : (pm10Val <= 150) ? "나쁨" : "매우 나쁨")
+                        : "정보없음";
+                    var tempText = (data.weather_temp !== null && data.weather_temp !== undefined && String(data.weather_temp).trim() !== '')
+                        ? (data.weather_temp + "℃")
+                        : "정보없음";
+                    var pm10Display = hasPm10 ? data.weather_pm10 : "정보없음";
+                    var hasPm25 = data.weather_pm25 !== null && data.weather_pm25 !== undefined && String(data.weather_pm25).trim() !== '';
+                    var pm25Val = hasPm25 ? parseInt(data.weather_pm25, 10) : null;
+                    var pm25Text = (data.weather_pm25_index !== null && data.weather_pm25_index !== undefined && String(data.weather_pm25_index).trim() !== '')
+                        ? data.weather_pm25_index
+                        : (hasPm25
+                            ? ((pm25Val <= 15) ? "좋음" : (pm25Val <= 35) ? "보통" : (pm25Val <= 75) ? "나쁨" : "매우 나쁨")
+                            : "정보없음");
+                    var pm25Color = (pm25Text === "좋음")
+                        ? "royalblue"
+                        : (pm25Text === "보통")
+                            ? "mediumseagreen"
+                            : (pm25Text === "나쁨")
+                                ? "darkorange"
+                                : (pm25Text === "매우 나쁨")
+                                    ? "crimson"
+                                    : "#6c757d";
+                    var pm25Display = hasPm25 ? ` (${data.weather_pm25})` : "";
+                    var uvDisplay = (data.weather_uv_index !== null && data.weather_uv_index !== undefined && String(data.weather_uv_index).trim() !== '')
+                        ? data.weather_uv_index
+                        : "정보없음";
+                    var hasPrecipitation = data.weather_precipitation !== null && data.weather_precipitation !== undefined && String(data.weather_precipitation).trim() !== '';
+                    var precipitationDisplay = hasPrecipitation ? data.weather_precipitation + " mm" : "";
+                    var weatherMsg = (data.weather_msg !== null && data.weather_msg !== undefined && String(data.weather_msg).trim() !== '')
+                        ? data.weather_msg
+                        : "알수없음";
+                    var precipitationHtml = hasPrecipitation
+                        ? `<b>강수량:</b> <span style="color:#1d4ed8; font-weight:700;">${precipitationDisplay}</span><br>`
+                        : "";
 
                     wWidget.style.display = "block";
                     wContent.innerHTML = `
-                        <b>기온:</b> <span style="color:#e63946; font-size:16px;">${data.weather_temp}℃</span><br>
-                        <b>미세먼지:</b> <span style="color:${pmColor}; font-weight:900;">${pmText}</span> (${data.weather_pm10})<br>
-                        <b>상태:</b> ${data.weather_msg || '알수없음'}
+                        <b>기온:</b> <span style="color:#e63946; font-size:16px;">${tempText}</span><br>
+                        <b>미세먼지:</b> <span style="color:${pmColor}; font-weight:900;">${pmText}</span> (${pm10Display})<br>
+                        <b>초미세먼지:</b> <span style="color:${pm25Color}; font-weight:700;">${pm25Text}</span>${pm25Display}<br>
+                        <b>자외선:</b> <span style="color:#eab308; font-weight:700;">${uvDisplay}</span><br>
+                        ${precipitationHtml}
+                        <b>상태:</b> ${weatherMsg}
                     `;
                 } else {
                     wWidget.style.display = "none";

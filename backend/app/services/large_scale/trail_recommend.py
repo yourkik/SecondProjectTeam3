@@ -276,76 +276,86 @@ def get_recommended_trails(user_lat: float, user_lng: float, max_distance_km: fl
     recommendations.sort(key=lambda x: x.distance_from_user)
     final_limit_items = recommendations[:limit]
 
-    # 5. 혼잡도/날씨 (서울 실시간 도시데이터 연동)
+# 5. 혼잡도/날씨 (서울 실시간 도시데이터 연동)
     weather_info = None
+
+    def clean_api_value(val):
+        """API 반환값 중 None이나 문자열 'null'을 빈 값으로 처리하는 헬퍼 함수"""
+        if val is None or str(val).strip().lower() == 'null':
+            return None
+        return val
+
     if use_realtime_api:
         for item in final_limit_items:
             city_data = fetch_city_data(item.trail_name)
             if city_data:
+                # 1) 혼잡도 정보
                 ppltn_list = city_data.get('LIVE_PPLTN_STTS', [])
-                if ppltn_list:
-                    item.congestion_lvl = ppltn_list[0].get('AREA_CONGEST_LVL')
-                    item.congestion_msg = ppltn_list[0].get('AREA_CONGEST_MSG')
+                if ppltn_list and isinstance(ppltn_list, list):
+                    item.congestion_lvl = clean_api_value(ppltn_list[0].get('AREA_CONGEST_LVL'))
+                    item.congestion_msg = clean_api_value(ppltn_list[0].get('AREA_CONGEST_MSG'))
+
+                # 2) 날씨/미세먼지 정보 (최초 1회만 수집)
                 if not weather_info:
-                    # 1) 날씨 정보 (기온, 메시지)
                     weather_list = city_data.get('WEATHER_STTS', [])
-                    weather = weather_list[0] if weather_list else {}
+                    weather = weather_list[0] if (weather_list and isinstance(weather_list, list)) else {}
                     
-                    # 2) 미세먼지 정보 (수치, 메시지)
-                    air_list = city_data.get('AIR_QUALITY_STTS', [])
-                    air = air_list[0] if air_list else {}
-
-                    temp = weather.get('TEMP')
-                    pm10 = air.get('PM10')
-                    w_msg = weather.get('WEATHER_MSG', '')
-                    a_msg = air.get('AIR_MSG', '')
+                    # 값 추출 및 'null' 문자열 정제
+                    temp = clean_api_value(weather.get('TEMP'))
+                    pm10 = clean_api_value(weather.get('PM10'))
+                    pm25 = clean_api_value(weather.get('PM25'))
+                    pm25_index = clean_api_value(weather.get('PM25_INDEX'))
+                    uv_index = clean_api_value(weather.get('UV_INDEX'))
+                    precipitation = clean_api_value(weather.get('PRECIPITATION'))
                     
-                    # 메시지 통합
-                    full_msg = f"{w_msg} {a_msg}".strip()
+                    # API 자체 제공 코멘트(메시지) 추출
+                    w_msg = clean_api_value(weather.get('WEATHER_MSG')) or ""
+                    a_msg = clean_api_value(weather.get('AIR_MSG')) or ""
                     
-                    # 기온이 높을 경우 경고 문구 추가
-                    if temp:
-                        try:
-                            if float(temp) >= 25:
-                                full_msg = f"🔥 [고온 주의] 기온이 {temp}℃로 높습니다. 수분 섭취에 유의하세요! {full_msg}"
-                        except ValueError:
-                            pass
-
-                    if not weather_info:
+                    # 메시지 통합 (빈 문자열 제외)
+                    msgs = [msg for msg in (w_msg, a_msg) if msg]
+                    full_msg = " ".join(msgs).strip()
+                    
+                    # 데이터가 하나라도 유효하게 들어왔을 때만 weather_info 할당
+                    if temp or pm10 or pm25 or pm25_index or uv_index or precipitation or full_msg:
                         weather_info = {
                             'temp': temp,
                             'pm10': pm10,
-                            'msg': full_msg
+                            'pm25': pm25,
+                            'pm25_index': pm25_index,
+                            'uv_index': uv_index,
+                            'precipitation': precipitation,
+                            'msg': full_msg if full_msg else None
                         }
+
+        # 모든 반복문에서 날씨를 못 가져온 경우 기본값(강동구청)으로 폴백
         if not weather_info:
             default_data = fetch_city_data("강동구청")
             if default_data:
-                # 1) 날씨 정보
                 weather_list = default_data.get('WEATHER_STTS', [])
-                weather = weather_list[0] if weather_list else {}
+                weather = weather_list[0] if (weather_list and isinstance(weather_list, list)) else {}
                 
-                # 2) 미세먼지 정보
-                air_list = default_data.get('AIR_QUALITY_STTS', [])
-                air = air_list[0] if air_list else {}
-
-                temp = weather.get('TEMP')
-                pm10 = air.get('PM10')
-                w_msg = weather.get('WEATHER_MSG', '')
-                a_msg = air.get('AIR_MSG', '')
+                temp = clean_api_value(weather.get('TEMP'))
+                pm10 = clean_api_value(weather.get('PM10'))
+                pm25 = clean_api_value(weather.get('PM25'))
+                pm25_index = clean_api_value(weather.get('PM25_INDEX'))
+                uv_index = clean_api_value(weather.get('UV_INDEX'))
+                precipitation = clean_api_value(weather.get('PRECIPITATION'))
                 
-                full_msg = f"{w_msg} {a_msg}".strip()
+                w_msg = clean_api_value(weather.get('WEATHER_MSG')) or ""
+                a_msg = clean_api_value(weather.get('AIR_MSG')) or ""
                 
-                if temp:
-                    try:
-                        if float(temp) >= 25:
-                            full_msg = f"🔥 [고온 주의] 기온이 {temp}℃로 높습니다. 수분 섭취에 유의하세요! {full_msg}"
-                    except ValueError:
-                        pass
+                msgs = [msg for msg in (w_msg, a_msg) if msg]
+                full_msg = " ".join(msgs).strip()
 
                 weather_info = {
                     'temp': temp,
                     'pm10': pm10,
-                    'msg': full_msg
+                    'pm25': pm25,
+                    'pm25_index': pm25_index,
+                    'uv_index': uv_index,
+                    'precipitation': precipitation,
+                    'msg': full_msg if full_msg else None
                 }
 
     # 6. 경사도 정보 주입

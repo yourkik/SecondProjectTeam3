@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+﻿from pydantic import BaseModel, Field
 from typing import List, Optional
 
 # 사용자 요청(Request) 모델: 위도(Y), 경도(X)
@@ -54,6 +54,10 @@ class TrailRecommendationResponse(BaseModel):
     items: List[TrailInfo]
     weather_temp: Optional[str] = Field(None, description="현재 대표 기온")
     weather_pm10: Optional[str] = Field(None, description="현재 대표 미세먼지 수치")
+    weather_pm25: Optional[str] = Field(None, description="현재 대표 초미세먼지 수치")
+    weather_pm25_index: Optional[str] = Field(None, description="현재 대표 초미세먼지 등급")
+    weather_uv_index: Optional[str] = Field(None, description="현재 대표 자외선 지수")
+    weather_precipitation: Optional[str] = Field(None, description="현재 대표 강수량")
     weather_msg: Optional[str] = Field(None, description="현재 대표 날씨 상세")
     count: int
 
