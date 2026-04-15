@@ -27,3 +27,7 @@ data/playgroundData/*.zip
 # Logs
 logs/
 *.log
+
+
+# frontend (Expo 앱 - 배포 제외)
+frontend/
