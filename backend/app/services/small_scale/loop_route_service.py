@@ -606,7 +606,12 @@ def generate_routes(
             route_profiles=route_profiles,
         )
         for i, route in enumerate(result):
-            route.route_explanation = explanations[i] if i < len(explanations) else None
+            exp = explanations[i] if i < len(explanations) else None
+            # dict 형태면 description 값만 추출
+            if isinstance(exp, dict) and "description" in exp:
+                route.route_explanation = exp["description"]
+            else:
+                route.route_explanation = exp
 
     # 기본 경로 대체 시에는 설명에 반드시 대체 사유를 명시한다.
     if result and (no_match_found or used_relaxed_fallback):
