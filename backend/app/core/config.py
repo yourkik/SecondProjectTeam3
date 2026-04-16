@@ -8,9 +8,10 @@ def get_database_url():
     url = os.getenv("DATABASE_URL")
     if url:
         return url
+    
     host = os.getenv("DB_HOST")
     port = os.getenv("DB_PORT", "5432")
-    db = os.getenv("DB_DATABASE") or os.getenv("DB_NAME")
+    db = os.getenv("DB_DATABASE")
     user = os.getenv("DB_USER")
     pw = os.getenv("DB_PASSWORD")
     if all([host, port, db, user, pw]):
