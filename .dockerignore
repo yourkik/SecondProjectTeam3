@@ -31,3 +31,19 @@ logs/
 
 # frontend (Expo 앱 - 배포 제외)
 frontend/
+
+# databricks 파일
+databricks/
+# 1. 경로 데이터
+databricks/edges/bronze_raw.ipynb
+databricks/edges/silver_small_scale.ipynb
+databricks/edges/silver_large_scale.ipynb
+databricks/edges/gold.ipynb
+# 2. 실시간 데이터 
+databricks/seoul_api/storage_mount.ipynb
+databricks/seoul_api/silver_citydata.ipynb
+databricks/seoul_api/silver_sdot.ipynb
+databricks/seoul_api/gold_citydata.ipynb
+databricks/seoul_api/gold_sdot_join.ipynb
+# 3. Postgresql 적재 코드
+databricks/postgres_load_realtime.ipynb
